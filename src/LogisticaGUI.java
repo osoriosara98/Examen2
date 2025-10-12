@@ -83,13 +83,13 @@ public class LogisticaGUI extends JFrame {
             @Override public void actionPerformed(ActionEvent e) {
                 String codigo = (String) JOptionPane.showInputDialog(
                         LogisticaGUI.this, "Código del envío a retirar:",
-                        "Logística - Retirar envío", JOptionPane.QUESTION_MESSAGE, null, null, null);
+                        "Logística - Retirar envío", JOptionPane.PLAIN_MESSAGE, null, null, null);
                 if (codigo != null && !codigo.trim().isEmpty()) {
                     boolean ok = gestor.retirarEnvioPorCodigo(codigo.trim());
                     if (ok) JOptionPane.showMessageDialog(LogisticaGUI.this, "Envío retirado correctamente.",
-                            "Logística - Retirar envío", JOptionPane.INFORMATION_MESSAGE);
+                            "Logística - Retirar envío", JOptionPane.PLAIN_MESSAGE);
                     else JOptionPane.showMessageDialog(LogisticaGUI.this, "Envío no encontrado.",
-                            "Logística - Retirar envío", JOptionPane.WARNING_MESSAGE);
+                            "Logística - Retirar envío", JOptionPane.PLAIN_MESSAGE);
                 }
             }
         });
@@ -146,7 +146,7 @@ public class LogisticaGUI extends JFrame {
             default -> envio = new EnvioMaritimo(codigo, cliente, peso, distancia);
         }
         gestor.agregarEnvio(envio);
-        JOptionPane.showMessageDialog(this, "Envío agregado.", "Logística — Agregar envío", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Envío agregado.", "Logística — Agregar envío", JOptionPane.PLAIN_MESSAGE);
         limpiarFormulario();
     }
 
