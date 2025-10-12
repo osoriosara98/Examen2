@@ -27,10 +27,10 @@ public class Logistica {
                     gestor.agregarEnvio();
                     break;
                 case 2:
-                    //gestor.retirarEnvio();
+                    gestor.retirarEnvio();
                     break;
                 case 3:
-                   // gestor.listarEnvios();
+                    gestor.listarEnvios();
                     break;
                 case 4:
                     System.out.println("Saliendo del sistema...");
