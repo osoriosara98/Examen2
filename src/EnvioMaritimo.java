@@ -5,6 +5,6 @@ class EnvioMaritimo extends Envio {
 
     @Override
     public double calcularTarifa() {
-        return distancia * 300 + peso * 100;
+        return getDistancia() * 300 + getPeso() * 100;
     }
 }

@@ -5,6 +5,6 @@ class EnvioAereo extends Envio {
 
     @Override
     public double calcularTarifa() {
-        return distancia * 1000 + peso * 400;
+        return getDistancia() * 1000 + getPeso() * 400;
     }
 }
