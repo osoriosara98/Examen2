@@ -1,8 +1,11 @@
 # Java
-bin/
+/bin/
+/out/
+/target/
 *.class
+*.log
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.iml
