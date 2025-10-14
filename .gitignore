@@ -1,0 +1,14 @@
+# Java
+/bin/
+/out/
+/target/
+*.class
+*.log
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# macOS
+.DS_Store
