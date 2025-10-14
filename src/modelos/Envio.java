@@ -1,5 +1,8 @@
 /*Creo una clase padre, declaro las variables que voy a usar */
-abstract class Envio {
+package modelos;
+
+
+public abstract class Envio {
     private final String codigo;
     private final String cliente;
     private final double peso;
