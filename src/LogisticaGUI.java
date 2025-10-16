@@ -4,11 +4,13 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+import javax.swing.text.AbstractDocument;
 import java.util.List;
 
 import modelos.*;
 import servicios.*;
 import configuraciones.*;
+import configuraciones.FiltroNumerico.TipoNumero;
 import interfaces.*;
 
 public class LogisticaGUI extends JFrame {
@@ -63,6 +65,10 @@ public class LogisticaGUI extends JFrame {
         pesoField.setPreferredSize(alto28S);
         distanciaField.setPreferredSize(alto28S);
         tipoBox.setPreferredSize(new Dimension(170, 28));
+
+        ((AbstractDocument) numeroField.getDocument()).setDocumentFilter(new FiltroNumerico(TipoNumero.ENTERO));
+        ((AbstractDocument) pesoField.getDocument()).setDocumentFilter(new FiltroNumerico(TipoNumero.DECIMAL));
+        ((AbstractDocument) distanciaField.getDocument()).setDocumentFilter(new FiltroNumerico(TipoNumero.DECIMAL));
     }
 
     private JComponent crearToolbar() {
