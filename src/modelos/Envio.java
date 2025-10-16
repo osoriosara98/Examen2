@@ -1,6 +1,4 @@
-/*Creo una clase padre, declaro las variables que voy a usar */
 package modelos;
-
 
 public abstract class Envio {
     private final String codigo;
@@ -22,9 +20,5 @@ public abstract class Envio {
 
     public abstract double calcularTarifa();
 }
-
-
-
-
 
 
