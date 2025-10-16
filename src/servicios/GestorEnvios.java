@@ -1,15 +1,20 @@
+package servicios;
+
+import modelos.Envio;
+import interfaces.IRepositorioEnvios;
 import java.util.ArrayList;
 import java.util.List;
 
-/** CRUD básico de envíos  */
-public class GestorEnvios {
+public class GestorEnvios implements IRepositorioEnvios {
     private final ArrayList<Envio> lista = new ArrayList<>();
 
-    public void agregarEnvio(Envio e) {
+    @Override
+    public void agregar(Envio e) {
         if (e != null) lista.add(e);
     }
 
-    public boolean retirarEnvioPorCodigo(String codigo) {
+    @Override
+    public boolean eliminarPorCodigo(String codigo) {
         if (codigo == null || codigo.isEmpty()) return false;
         for (int i = 0; i < lista.size(); i++) {
             if (codigo.equals(lista.get(i).getCodigo())) {
@@ -20,7 +25,8 @@ public class GestorEnvios {
         return false;
     }
 
-    public List<Envio> obtenerEnvios() {
-        return lista; 
+    @Override
+    public List<Envio> obtenerTodos() {
+        return new ArrayList<>(lista);
     }
 }

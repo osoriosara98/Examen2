@@ -1,15 +1,23 @@
 import java.awt.*;
-import java.text.DecimalFormat;
-import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+import javax.swing.text.AbstractDocument;
+import java.util.List;
+
+import modelos.*;
+import servicios.*;
+import configuraciones.*;
+import configuraciones.FiltroNumerico.TipoNumero;
+import interfaces.*;
 
 public class LogisticaGUI extends JFrame {
 
-    private final GestorEnvios gestor = new GestorEnvios();
+    private final IRepositorioEnvios repositorio;
+    private final IValidadorFormulario validador;
+    private final ServicioTabla servicioTabla;
 
     private final JTextField numeroField    = new JTextField();
     private final JTextField clienteField   = new JTextField();
@@ -24,11 +32,12 @@ public class LogisticaGUI extends JFrame {
     };
     private final JTable tabla = new JTable(model);
 
-    private final DecimalFormat dfNum   = new DecimalFormat("#,##0.0");
-    private final DecimalFormat dfMoney = new DecimalFormat("#,##0");
-
-    public LogisticaGUI() {
+    public LogisticaGUI(IRepositorioEnvios repositorio, IValidadorFormulario validador, ServicioTabla servicioTabla) {
         super("Operador Logístico");
+
+        this.repositorio = repositorio;
+        this.validador = validador;
+        this.servicioTabla = servicioTabla;
 
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
         catch (Exception ignored) {}
@@ -38,14 +47,7 @@ public class LogisticaGUI extends JFrame {
         setMinimumSize(new Dimension(900, 560));
         setLocationRelativeTo(null);
 
-        Dimension alto28  = new Dimension(220, 28);
-        Dimension alto28S = new Dimension(160, 28);
-        numeroField.setPreferredSize(alto28);
-        clienteField.setPreferredSize(new Dimension(280, 28));
-        pesoField.setPreferredSize(alto28S);
-        distanciaField.setPreferredSize(alto28S);
-        tipoBox.setPreferredSize(new Dimension(170, 28));
-
+        configurarDimensiones();
         add(crearToolbar(), BorderLayout.NORTH);
         add(crearCentro(),  BorderLayout.CENTER);
 
@@ -55,6 +57,20 @@ public class LogisticaGUI extends JFrame {
         setVisible(true);
     }
 
+    private void configurarDimensiones() {
+        Dimension alto28  = new Dimension(220, 28);
+        Dimension alto28S = new Dimension(160, 28);
+        numeroField.setPreferredSize(alto28);
+        clienteField.setPreferredSize(new Dimension(280, 28));
+        pesoField.setPreferredSize(alto28S);
+        distanciaField.setPreferredSize(alto28S);
+        tipoBox.setPreferredSize(new Dimension(170, 28));
+
+        ((AbstractDocument) numeroField.getDocument()).setDocumentFilter(new FiltroNumerico(TipoNumero.ENTERO));
+        ((AbstractDocument) pesoField.getDocument()).setDocumentFilter(new FiltroNumerico(TipoNumero.DECIMAL));
+        ((AbstractDocument) distanciaField.getDocument()).setDocumentFilter(new FiltroNumerico(TipoNumero.DECIMAL));
+    }
+
     private JComponent crearToolbar() {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 10));
         p.setBorder(new EmptyBorder(8, 12, 0, 12));
@@ -62,8 +78,8 @@ public class LogisticaGUI extends JFrame {
         JButton btnAgregar = new JButton();
         JButton btnRetirar = new JButton();
 
-        ImageIcon add = cargarIcono("/img/add.png");
-        ImageIcon rem = cargarIcono("/img/remove.png");
+        ImageIcon add = CargadorIconos.cargarIcono("/img/add.png");
+        ImageIcon rem = CargadorIconos.cargarIcono("/img/remove.png");
         if (add != null) btnAgregar.setIcon(add); else btnAgregar.setText("Agregar");
         if (rem != null) btnRetirar.setIcon(rem); else btnRetirar.setText("Retirar");
 
@@ -77,11 +93,6 @@ public class LogisticaGUI extends JFrame {
         p.add(btnAgregar);
         p.add(btnRetirar);
         return p;
-    }
-
-    private ImageIcon cargarIcono(String path) {
-        java.net.URL url = getClass().getResource(path);
-        return (url == null) ? null : new ImageIcon(url);
     }
 
     private JComponent crearCentro() {
@@ -147,27 +158,28 @@ public class LogisticaGUI extends JFrame {
     }
 
     private void guardarDesdeFormulario() {
-        String codigo  = numeroField.getText().trim();
-        String cliente = clienteField.getText().trim();
-        if (codigo.isEmpty() || cliente.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Número y Cliente son obligatorios.");
+        ResultadoValidacion resultado = validador.validar(
+            numeroField.getText(),
+            clienteField.getText(),
+            pesoField.getText(),
+            distanciaField.getText()
+        );
+
+        if (!resultado.esValido()) {
+            JOptionPane.showMessageDialog(this, resultado.getMensajeError());
             return;
         }
-        double peso, distancia;
-        try { peso = Double.parseDouble(pesoField.getText().trim().replace(',', '.')); }
-        catch (Exception ex) { JOptionPane.showMessageDialog(this, "Peso inválido."); return; }
-        try { distancia = Double.parseDouble(distanciaField.getText().trim().replace(',', '.')); }
-        catch (Exception ex) { JOptionPane.showMessageDialog(this, "Distancia inválida."); return; }
 
-        Envio envio;
-        switch (tipoBox.getSelectedIndex()) {
-            case 0 -> envio = new EnvioTerrestre(codigo, cliente, peso, distancia);
-            case 1 -> envio = new EnvioAereo(codigo, cliente, peso, distancia);
-            default -> envio = new EnvioMaritimo(codigo, cliente, peso, distancia);
-        }
+        Envio envio = FabricaEnvios.crearEnvio(
+            tipoBox.getSelectedIndex(),
+            numeroField.getText().trim(),
+            clienteField.getText().trim(),
+            resultado.getPeso(),
+            resultado.getDistancia()
+        );
 
-        gestor.agregarEnvio(envio);
-        agregarFila(envio);
+        repositorio.agregar(envio);
+        servicioTabla.agregarFila(model, envio);
         limpiarFormulario();
     }
 
@@ -179,7 +191,9 @@ public class LogisticaGUI extends JFrame {
         }
         int modelRow = tabla.convertRowIndexToModel(viewRow);
         String codigo = model.getValueAt(modelRow, 1).toString();
-        if (gestor.retirarEnvioPorCodigo(codigo)) model.removeRow(modelRow);
+        if (repositorio.eliminarPorCodigo(codigo)) {
+            servicioTabla.eliminarFila(model, modelRow);
+        }
     }
 
     private void limpiarFormulario() {
@@ -191,23 +205,12 @@ public class LogisticaGUI extends JFrame {
         numeroField.requestFocusInWindow();
     }
 
-    private void agregarFila(Envio e) {
-        String tipo = (e instanceof EnvioTerrestre) ? "Terrestre"
-                    : (e instanceof EnvioAereo)     ? "Aéreo" : "Marítimo";
-        model.addRow(new Object[]{
-                tipo,
-                e.getCodigo(),
-                e.getCliente(),
-                dfNum.format(e.getPeso()),
-                dfNum.format(e.getDistancia()),
-                dfMoney.format(Math.round(e.calcularTarifa()))
-        });
-    }
-
     private void refrescarTablaCompleta() {
-        model.setRowCount(0);
-        List<Envio> envios = gestor.obtenerEnvios();
-        for (Envio e : envios) agregarFila(e);
+        servicioTabla.limpiarTabla(model);
+        List<Envio> envios = repositorio.obtenerTodos();
+        for (Envio e : envios) {
+            servicioTabla.agregarFila(model, e);
+        }
     }
 
     private void configurarTabla() {
@@ -226,9 +229,9 @@ public class LogisticaGUI extends JFrame {
 
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(SwingConstants.RIGHT);
-        tabla.getColumnModel().getColumn(3).setCellRenderer(right); // Peso
-        tabla.getColumnModel().getColumn(4).setCellRenderer(right); // Distancia
-        tabla.getColumnModel().getColumn(5).setCellRenderer(right); // Costo
+        tabla.getColumnModel().getColumn(3).setCellRenderer(right);
+        tabla.getColumnModel().getColumn(4).setCellRenderer(right);
+        tabla.getColumnModel().getColumn(5).setCellRenderer(right);
 
         DefaultTableCellRenderer clientR = new DefaultTableCellRenderer() {
             @Override public Component getTableCellRendererComponent(
@@ -242,6 +245,11 @@ public class LogisticaGUI extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(LogisticaGUI::new);
+        SwingUtilities.invokeLater(() -> {
+            IRepositorioEnvios repositorio = new GestorEnvios();
+            IValidadorFormulario validador = new ValidadorFormulario();
+            ServicioTabla servicioTabla = new ServicioTabla();
+            new LogisticaGUI(repositorio, validador, servicioTabla);
+        });
     }
 }
